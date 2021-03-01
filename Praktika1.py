@@ -2,7 +2,6 @@ import json
 
 import psutil
 import time
-from psutil._common import bytes2human
 import signal
 import sys
 import requests
@@ -37,8 +36,10 @@ def handler(sig_num, frame):
     sys.exit(0)
 
 def datuakIgo(ram,cpu,kanalId): #Ram-aren eta CPU-aren datuak igo
+    #Field1 = CPU-aren field-a
+    #Field2 = RAM-aren field-a
     metodoa = 'GET'
-    uria = "https://api.thingspeak.com/update.json?api_key="+str(kanalId)+"&field1="+str(cpu)+"&field2="+str(ram)
+    uria = "https://api.thingspeak.com/update.json?api_key="+kanalId+"&field1="+str(cpu)+"&field2="+str(ram)
     print(uria)
 
     erantzuna = requests.request(metodoa, uria, allow_redirects=False)
@@ -50,7 +51,7 @@ def datuakIgo(ram,cpu,kanalId): #Ram-aren eta CPU-aren datuak igo
     edukia = erantzuna.content
     print(edukia)
 
-def kanalaDago(): #Erabiltzaileak kanala duen begiratu, kanala badu id-a hartu
+def kanalaDago(): #Erabiltzaileak kanala duen begiratu, kanala badu eta idatzi ahal bada haren id-a hartu
     method = 'GET'
     uri = "https://api.thingspeak.com/channels.json?api_key="+apiGakoa  # Ateratzeko form-en begiratu
     erantzun = requests.request(method, uri, allow_redirects=False)
@@ -78,7 +79,7 @@ def kanalaSortu(): #Kanal berri bat sortu
     goiburuak = {'Host': 'api.thingspeak.com',
                  'Content-Type': 'application/x-www-form-urlencoded'}
 
-    datuak = {'api_key': apiGakoa,'field1':'fieldCPU','field2':'fieldRam'}
+    datuak = {'api_key': apiGakoa}
     edukia = urllib.parse.urlencode(datuak)
     goiburuak['Content-Length'] = str(len(edukia))
 
