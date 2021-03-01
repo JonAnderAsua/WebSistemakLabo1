@@ -38,7 +38,7 @@ def handler(sig_num, frame):
 
 def datuakIgo(ram,cpu,kanalId): #Ram-aren eta CPU-aren datuak igo
     metodoa = 'GET'
-    uria = "https://api.thingspeak.com/update.json?api_key="+str(kanalId)+"&fieldCpu="+str(cpu)+"&fieldRam="+str(ram)
+    uria = "https://api.thingspeak.com/update.json?api_key="+str(kanalId)+"&field1="+str(cpu)+"&field2="+str(ram)
     print(uria)
 
     erantzuna = requests.request(metodoa, uria, allow_redirects=False)
