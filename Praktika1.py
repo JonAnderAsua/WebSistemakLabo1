@@ -8,20 +8,20 @@ import sys
 import requests
 import urllib
 
-apiGakoa = "KJ0S8T8BGX7C3TMN"
+#apiGakoa = "KJ0S8T8BGX7C3TMN"
+apiGakoa = ""
 
 def cpu_ram(kanalId):
     while True:
-    # KODEA: psutil liburutegia erabiliz, %CPU eta %RAM atera
+        # CPU-aren ehunekoa lortu
         cpu = psutil.cpu_percent(interval=None)
+        print('CPU: ' + str(cpu) + "%")
 
-        value = bytes2human(cpu)
-        print('CPU: ' + value)
+        # RAM-aren ehunekoa lortu
+        ram = psutil.virtual_memory().percent
+        print('RAM: '+ str(ram) + "%")
 
-        ram = psutil.virtual_memory()
-        ram = ram.active
-        ram= bytes2human(ram)
-        print('RAM: '+ ram)
+        #Datuak aplikazioara igo
         datuakIgo(ram,cpu,kanalId)
         time.sleep(15)
 
@@ -36,13 +36,12 @@ def handler(sig_num, frame):
 
     sys.exit(0)
 
-def datuakIgo(ram,cpu,kanalId): #Ram eta CPU-aren datuak igotzen dira
+def datuakIgo(ram,cpu,kanalId): #Ram-aren eta CPU-aren datuak igo
     metodoa = 'GET'
-    uria = "https://api.thingspeak.com/update.json"
-    goiburuak = {'Host':'api.thingspeak.com'}
-    edukia = {'apy_key':kanalId,'fieldCpu':cpu,'fieldRam':ram}
+    uria = "https://api.thingspeak.com/update.json?api_key="+str(kanalId)+"&fieldCpu="+str(cpu)+"&fieldRam="+str(ram)
+    print(uria)
 
-    erantzuna = requests.request(metodoa, uria,data = edukia,headers = goiburuak, allow_redirects=False)
+    erantzuna = requests.request(metodoa, uria, allow_redirects=False)
 
     kodea = erantzuna.status_code
     deskribapena = erantzuna.reason
@@ -55,12 +54,19 @@ def kanalaDago(): #Erabiltzaileak kanala duen begiratu, kanala badu id-a hartu
     method = 'GET'
     uri = "https://api.thingspeak.com/channels.json?api_key="+apiGakoa  # Ateratzeko form-en begiratu
     erantzun = requests.request(method, uri, allow_redirects=False)
-    print(uri)
     zerrenda = json.loads(erantzun.content)
+    i = 0
+    kanalGakoak = [None] * len(zerrenda)
     if len(zerrenda)>0:
-        kanalId = zerrenda[1]['id']
-        cpu_ram(kanalId)
-        return kanalId
+        print("Kanala sortuta dago")
+        for j in zerrenda:
+            kanalGakoak[i] = j['api_keys'] #Gako guztiak lortu
+            i += 1
+
+            for k in j['api_keys']:
+                if k['write_flag']: #Kanala idazteko aukera badu if-ean sartu
+                    kanalId = k['api_key']
+                    cpu_ram(kanalId)
     else:
         print("Ez dago kanalik, bat sortuko da")
         kanalaSortu()
@@ -79,9 +85,8 @@ def kanalaSortu(): #Kanal berri bat sortu
     erantzuna = requests.request(metodoa, uria, data=edukia, headers=goiburuak, allow_redirects=False)
 
     kodea = erantzuna.status_code
-    deskribapena = erantzuna.reason
 
-    if kodea == 200:
+    if kodea == 200: #Aurreko metodora deitu kanalaren id-a lortzeko
         kanalaDago()
 
 
@@ -104,6 +109,8 @@ def kanalaHustu(kanalId): #Dagoeneko kanala hustu
     print(erantzuna.content)
 
 if __name__ == "__main__":
+
+     apiGakoa = str(input('Sartu apiaren gakoa mesedez...'))
      kanalId = kanalaDago()
      # SIGINT jasotzen denean, "handler" metodoa exekutatuko da
      signal.signal(signal.SIGINT, handler(kanalId))
