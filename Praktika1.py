@@ -1,5 +1,4 @@
 import json
-
 import psutil
 import time
 import signal
@@ -9,8 +8,9 @@ import urllib
 
 #apiGakoa = "KJ0S8T8BGX7C3TMN"
 apiGakoa = ""
+kanalId = ""
 
-def cpu_ram(kanalId):
+def cpu_ram():
     while True:
         # CPU-aren ehunekoa lortu
         cpu = psutil.cpu_percent(interval=None)
@@ -21,26 +21,45 @@ def cpu_ram(kanalId):
         print('RAM: '+ str(ram) + "%")
 
         #Datuak aplikazioara igo
-        datuakIgo(ram,cpu,kanalId)
+        print("Datuak igoko dira")
+        datuakIgo(ram,cpu)
         time.sleep(15)
+
+def kanalaHustu(): #Dagoeneko kanala hustu
+    metodoa = 'DELETE'
+    uria = "https://api.thingspeak.com/channels/"+kanalId
+    print("Kanala husteko uri-a: "+uria)
+    goiburuak = {'Host': 'api.thingspeak.com',
+                 'Content-Type': 'application/x-www-form-urlencoded'}
+
+    datuak = {'api_key': apiGakoa}
+    edukia = urllib.parse.urlencode(datuak)
+    goiburuak['Content-Length'] = str(len(edukia))
+
+    erantzuna = requests.request(metodoa, uria, data=edukia, headers=goiburuak, allow_redirects=False)
+
+    kodea = erantzuna.status_code
+    deskribapena = erantzuna.reason
+
+    print(str(kodea) + "" + deskribapena)
+    print(erantzuna.content)
 
 def handler(sig_num, frame):
 
-    kanalaHustu(frame)
+    print("Kanala hustuko da...")
+    kanalaHustu()
 
     print('\nSignal handler called with signal ' + str(sig_num))
-    print('Check signal number on '
-          'https://en.wikipedia.org/wiki/Signal_%28IPC%29#Default_action')
     print('\nExiting gracefully')
-
+    print("Ctrl + C sakatu du")
     sys.exit(0)
 
-def datuakIgo(ram,cpu,kanalId): #Ram-aren eta CPU-aren datuak igo
+def datuakIgo(ram,cpu): #Ram-aren eta CPU-aren datuak igo
     #Field1 = CPU-aren field-a
     #Field2 = RAM-aren field-a
     metodoa = 'GET'
     uria = "https://api.thingspeak.com/update.json?api_key="+kanalId+"&field1="+str(cpu)+"&field2="+str(ram)
-    print(uria)
+    print("Datuak igotzeko uri-a:\n" + uria)
 
     erantzuna = requests.request(metodoa, uria, allow_redirects=False)
 
@@ -53,9 +72,10 @@ def datuakIgo(ram,cpu,kanalId): #Ram-aren eta CPU-aren datuak igo
 
 def kanalaDago(): #Erabiltzaileak kanala duen begiratu, kanala badu eta idatzi ahal bada haren id-a hartu
     method = 'GET'
-    uri = "https://api.thingspeak.com/channels.json?api_key="+apiGakoa  # Ateratzeko form-en begiratu
+    uri = "https://api.thingspeak.com/channels.json?api_key="+apiGakoa # Ateratzeko form-en begiratu
+    print("Kanala sortuta dagoen ala ez ikusteko uri-a:\n"+uri)
     erantzun = requests.request(method, uri, allow_redirects=False)
-    zerrenda = json.loads(erantzun.content)
+    zerrenda = json.loads(erantzun.content) #Erantzunaren json-k lortu
     i = 0
     kanalGakoak = [None] * len(zerrenda)
     if len(zerrenda)>0:
@@ -66,7 +86,7 @@ def kanalaDago(): #Erabiltzaileak kanala duen begiratu, kanala badu eta idatzi a
 
             for k in j['api_keys']:
                 if k['write_flag']: #Kanala idazteko aukera badu if-ean sartu
-                    kanalId = k['api_key']
+                    return k['api_key']
                     cpu_ram(kanalId)
     else:
         print("Ez dago kanalik, bat sortuko da")
@@ -91,30 +111,13 @@ def kanalaSortu(): #Kanal berri bat sortu
         kanalaDago()
 
 
-def kanalaHustu(kanalId): #Dagoeneko kanala hustu
-    metodoa = 'DELETE'
-    uria = "https://api.thingspeak.com/channels/"+kanalId+"/feeds.json"  # Ateratzeko form-en begiratu
-    goiburuak = {'Host': 'api.thingspeak.com',
-                 'Content-Type': 'application/x-www-form-urlencoded'}
-
-    datuak = {'api_key': apiGakoa}
-    edukia = urllib.parse.urlencode(datuak)
-    goiburuak['Content-Length'] = str(len(edukia))
-
-    erantzuna = requests.request(metodoa, uria, data=edukia, headers=goiburuak, allow_redirects=False)
-
-    kodea = erantzuna.status_code
-    deskribapena = erantzuna.reason
-
-    print(str(kodea) + "" + deskribapena)
-    print(erantzuna.content)
 
 if __name__ == "__main__":
 
-     apiGakoa = str(input('Sartu apiaren gakoa mesedez...'))
-     kanalId = kanalaDago()
+     apiGakoa = str(input('Sartu apiaren gakoa mesedez...\n'))
+     kanalId = kanalaDago() #Kanala badago
      # SIGINT jasotzen denean, "handler" metodoa exekutatuko da
-     signal.signal(signal.SIGINT, handler(kanalId))
+     signal.signal(signal.SIGINT, handler)
      print('Running. Press CTRL-C to exit.')
      while True:
-         pass  # Ezer ez egin
+        cpu_ram()
