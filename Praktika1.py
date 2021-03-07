@@ -59,6 +59,7 @@ def datuakIgo(ram,cpu): #Ram-aren eta CPU-aren datuak igo
     #Field2 = RAM-aren field-a
     metodoa = 'GET'
     uria = "https://api.thingspeak.com/update.json?api_key="+kanalId+"&field1="+str(cpu)+"&field2="+str(ram)
+
     print("Datuak igotzeko uri-a:\n" + uria)
 
     erantzuna = requests.request(metodoa, uria, allow_redirects=False)
