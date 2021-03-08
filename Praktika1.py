@@ -8,6 +8,7 @@ import urllib
 
 #apiGakoa = "KJ0S8T8BGX7C3TMN"
 apiGakoa = ""
+kanalGakoa = ""
 kanalId = ""
 
 def cpu_ram():
@@ -27,7 +28,9 @@ def cpu_ram():
 
 def kanalaHustu(): #Dagoeneko kanala hustu
     metodoa = 'DELETE'
-    uria = "https://api.thingspeak.com/channels/"+kanalId
+    print("Sartu " + str(kanalId))
+    uria = "https://api.thingspeak.com/channels/" + str(kanalId) + "/feeds.json"
+    #uria = "https://api.thingspeak.com/channels/"+kanalId
     print("Kanala husteko uri-a: "+uria)
     goiburuak = {'Host': 'api.thingspeak.com',
                  'Content-Type': 'application/x-www-form-urlencoded'}
@@ -58,7 +61,7 @@ def datuakIgo(ram,cpu): #Ram-aren eta CPU-aren datuak igo
     #Field1 = CPU-aren field-a
     #Field2 = RAM-aren field-a
     metodoa = 'GET'
-    uria = "https://api.thingspeak.com/update.json?api_key="+kanalId+"&field1="+str(cpu)+"&field2="+str(ram)
+    uria = "https://api.thingspeak.com/update.json?api_key=" + kanalGakoa + "&field1=" + str(cpu) + "&field2=" + str(ram)
 
     print("Datuak igotzeko uri-a:\n" + uria)
 
@@ -72,6 +75,7 @@ def datuakIgo(ram,cpu): #Ram-aren eta CPU-aren datuak igo
     print(edukia)
 
 def kanalaDago(): #Erabiltzaileak kanala duen begiratu, kanala badu eta idatzi ahal bada haren id-a hartu
+    global kanalId
     method = 'GET'
     uri = "https://api.thingspeak.com/channels.json?api_key="+apiGakoa # Ateratzeko form-en begiratu
     print("Kanala sortuta dagoen ala ez ikusteko uri-a:\n"+uri)
@@ -82,13 +86,15 @@ def kanalaDago(): #Erabiltzaileak kanala duen begiratu, kanala badu eta idatzi a
     if len(zerrenda)>0:
         print("Kanala sortuta dago")
         for j in zerrenda:
+            kanalId = j['id'] #Kanalaren id-a lortu
+            print("Kanalaren id-a hurrengoa da: " + str(kanalId))
             kanalGakoak[i] = j['api_keys'] #Gako guztiak lortu
             i += 1
 
             for k in j['api_keys']:
                 if k['write_flag']: #Kanala idazteko aukera badu if-ean sartu
                     return k['api_key']
-                    cpu_ram(kanalId)
+                    cpu_ram()
     else:
         print("Ez dago kanalik, bat sortuko da")
         kanalaSortu()
@@ -116,7 +122,7 @@ def kanalaSortu(): #Kanal berri bat sortu
 if __name__ == "__main__":
 
      apiGakoa = str(input('Sartu apiaren gakoa mesedez...\n'))
-     kanalId = kanalaDago() #Kanala badago
+     kanalGakoa = kanalaDago() #Kanala badago
      # SIGINT jasotzen denean, "handler" metodoa exekutatuko da
      signal.signal(signal.SIGINT, handler)
      print('Running. Press CTRL-C to exit.')
