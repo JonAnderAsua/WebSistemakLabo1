@@ -28,9 +28,7 @@ def cpu_ram():
 
 def kanalaHustu(): #Dagoeneko kanala hustu
     metodoa = 'DELETE'
-    print("Sartu " + str(kanalId))
     uria = "https://api.thingspeak.com/channels/" + str(kanalId) + "/feeds.json"
-    #uria = "https://api.thingspeak.com/channels/"+kanalId
     print("Kanala husteko uri-a: "+uria)
     goiburuak = {'Host': 'api.thingspeak.com',
                  'Content-Type': 'application/x-www-form-urlencoded'}
